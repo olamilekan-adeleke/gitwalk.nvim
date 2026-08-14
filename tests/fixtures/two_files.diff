@@ -1,0 +1,19 @@
+diff --git a/lib/auth/login.dart b/lib/auth/login.dart
+index 1111111..2222222 100644
+--- a/lib/auth/login.dart
++++ b/lib/auth/login.dart
+@@ -15,0 +16,4 @@ class Login {
++  bool loading = false;
++
++  Future<void> login() async {
++  }
+@@ -47,1 +51,2 @@ Future<void> login()
+-  await auth();
++  await authenticate();
++  notify();
+diff --git a/lib/auth/register.dart b/lib/auth/register.dart
+index 3333333..4444444 100644
+--- a/lib/auth/register.dart
++++ b/lib/auth/register.dart
+@@ -22,0 +23,1 @@ void validate()
++  if (email.isEmpty) return;

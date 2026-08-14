@@ -1,0 +1,81 @@
+*gitwalk.txt*  Navigate git diffs as a tree of hunks
+
+==============================================================================
+CONTENTS                                                     *gitwalk-contents*
+
+  1. Introduction ............... |gitwalk-introduction|
+  2. Setup ....................... |gitwalk-setup|
+  3. Commands .................... |gitwalk-commands|
+  4. Keymaps ..................... |gitwalk-keymaps|
+  5. Configuration ............... |gitwalk-config|
+
+==============================================================================
+1. Introduction                                          *gitwalk-introduction*
+
+gitwalk.nvim renders `git diff` as a tree whose leaves are individual hunks,
+not files. Expanding a file reveals its hunks; moving between them and
+pressing <CR> jumps your cursor to the exact changed line, with a live
+preview kept in sync as you move.
+
+==============================================================================
+2. Setup                                                        *gitwalk-setup*
+>lua
+    require("gitwalk").setup({
+      -- see |gitwalk-config| for all options
+    })
+<
+==============================================================================
+3. Commands                                                  *gitwalk-commands*
+
+:Gitwalk                                                            *:Gitwalk*
+    Open the panel (or refresh it if already open).
+
+:GitwalkToggle                                                *:GitwalkToggle*
+    Toggle the panel open/closed.
+
+:GitwalkRefresh                                              *:GitwalkRefresh*
+    Re-run `git diff` and redraw the tree, preserving expand state.
+
+==============================================================================
+4. Keymaps                                                    *gitwalk-keymaps*
+
+Buffer-local to the gitwalk panel:
+
+    j / k       next / previous node, updates the preview
+    <CR>        jump: move editing focus to the hunk's first changed line
+    l           expand node
+    h           collapse node
+    <Tab>       toggle expand/collapse
+    r           refresh
+    s           stage the hunk under the cursor
+    S           stage the whole file under the cursor
+    q           close the panel
+
+All are rebindable, see |gitwalk-config|.
+
+==============================================================================
+5. Configuration                                                *gitwalk-config*
+>lua
+    require("gitwalk").setup({
+      width = 40,
+      position = "left",   -- "left" | "right"
+      icons = true,
+      sign_column = true,
+      diff_context = 0,
+      keymaps = {
+        next = "j",
+        prev = "k",
+        jump = "<CR>",
+        expand = "l",
+        collapse = "h",
+        toggle = "<Tab>",
+        refresh = "r",
+        stage_hunk = "s",
+        stage_file = "S",
+        close = "q",
+      },
+    })
+<
+Set any keymap to `""` to disable it.
+
+vim:tw=78:ts=8:noet:ft=help:norl:
