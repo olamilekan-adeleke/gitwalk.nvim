@@ -12,19 +12,24 @@ change-by-change, with a live preview and jump-to-exact-line.
       └─ ③ error handling      L103
 ```
 
-`j`/`k` moves node-to-node (hunks once a file is expanded); `<CR>` drops
-your cursor on the exact changed line, not just the top of the file.
+`j`/`k` moves node-to-node (hunks once a file is expanded); the floating
+preview shows just that hunk's diff, not the whole file. `<CR>` drops your
+cursor on the exact changed line in a real window.
 
 ## Status
 
-MVP implemented: async git diff parsing, hunk tree, live preview, jump,
-hunk/file staging, `:checkhealth`. See [`PLAN.md`](./PLAN.md) for the full
-architecture and roadmap.
+MVP implemented: async git diff parsing, hunk tree, floating chunk-only
+preview (delta-rendered when available), jump, hunk/file staging,
+`:checkhealth`. See [`PLAN.md`](./PLAN.md) for the full architecture and
+roadmap.
 
 ## Requirements
 
 - Neovim ≥ 0.10
 - `git` on `$PATH`
+- [delta](https://github.com/dandavison/delta) (optional) — syntax-highlighted,
+  colorized preview; without it the preview falls back to plain
+  `filetype=diff` highlighting
 - [nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons) (optional)
 
 ## Install (lazy.nvim)

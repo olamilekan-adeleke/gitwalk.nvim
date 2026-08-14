@@ -27,6 +27,12 @@ function M.check()
   else
     warn("nvim-web-devicons not found (optional, icons will be plain text)")
   end
+
+  if vim.fn.executable("delta") == 1 then
+    ok("delta found: " .. vim.fn.exepath("delta") .. " (preview will be syntax-highlighted)")
+  else
+    warn("delta not found (optional, https://github.com/dandavison/delta — preview falls back to plain 'filetype=diff' highlighting)")
+  end
 end
 
 return M

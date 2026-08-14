@@ -52,4 +52,18 @@ describe("gitwalk.parser", function()
     local files = parser.parse(read_fixture("two_files.diff"))
     assert.truthy(files[1].diff_header:match("^diff %-%-git a/lib/auth/login%.dart"))
   end)
+
+  it("does not duplicate the hunk header into diff_header", function()
+    -- diff_header .. table.concat(hunk.lines, "\n") is exactly what
+    -- patch.lua builds for staging/preview; the "@@" line must appear
+    -- there exactly once, not once in each half.
+    local files = parser.parse(read_fixture("two_files.diff"))
+    local login = files[1]
+    assert.falsy(login.diff_header:find("@@", 1, true))
+
+    local patch = require("gitwalk.patch")
+    local built = patch.hunk(login, login.hunks[1])
+    local _, count = built:gsub("@@ %-15,0 %+16,4 @@", "")
+    assert.equals(1, count)
+  end)
 end)

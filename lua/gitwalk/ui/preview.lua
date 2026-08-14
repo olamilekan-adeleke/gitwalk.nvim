@@ -1,3 +1,6 @@
+local diffview = require("gitwalk.diffview")
+local patch = require("gitwalk.patch")
+
 local M = {}
 
 local ns = vim.api.nvim_create_namespace("gitwalk_preview")
@@ -6,8 +9,9 @@ local ns = vim.api.nvim_create_namespace("gitwalk_preview")
 ---the panel/preview take over the "previous window" slot.
 M.target_win = nil
 
----The floating peek window shown while moving between nodes.
+---The floating peek window/buffer shown while moving between nodes.
 M.float_win = nil
+M.float_buf = nil
 
 function M.remember_target_win()
   local win = vim.api.nvim_get_current_win()
@@ -83,8 +87,10 @@ local function float_geometry(panel_winid, position)
   }
 end
 
----Show a read-only floating peek of the file/hunk under the cursor. Does
----not move editing focus.
+---Show a read-only floating peek of just the hunk's diff (not the whole
+---file), rendered through `delta` when available for syntax-highlighted,
+---colorized output — plain `filetype=diff` otherwise. Does not move editing
+---focus; see focus() for that.
 ---@param cwd string
 ---@param node TreeNode
 ---@param panel_winid integer?
@@ -95,27 +101,28 @@ function M.show(cwd, node, panel_winid, position)
     return
   end
 
-  local bufnr = load_file_buf(cwd .. "/" .. file.path)
-  local target_line = highlight_hunk(bufnr, node)
-
   if not (M.float_win and vim.api.nvim_win_is_valid(M.float_win)) then
-    M.float_win = vim.api.nvim_open_win(bufnr, false, float_geometry(panel_winid, position))
-    vim.wo[M.float_win].number = true
-    vim.wo[M.float_win].wrap = false
-    vim.wo[M.float_win].signcolumn = "yes"
-    vim.wo[M.float_win].cursorline = true
-  else
-    vim.api.nvim_win_set_buf(M.float_win, bufnr)
+    local placeholder = vim.api.nvim_create_buf(false, true)
+    M.float_win = vim.api.nvim_open_win(placeholder, false, float_geometry(panel_winid, position))
   end
 
-  place_cursor(M.float_win, bufnr, target_line)
+  local text = node.type == "hunk" and patch.hunk(file, node.hunk) or patch.file(file)
+  local old_buf = M.float_buf
+  M.float_buf = diffview.render(M.float_win, text, cwd)
+  if old_buf and old_buf ~= M.float_buf and vim.api.nvim_buf_is_valid(old_buf) then
+    pcall(vim.api.nvim_buf_delete, old_buf, { force = true })
+  end
 end
 
 function M.close()
   if M.float_win and vim.api.nvim_win_is_valid(M.float_win) then
     vim.api.nvim_win_close(M.float_win, true)
   end
+  if M.float_buf and vim.api.nvim_buf_is_valid(M.float_buf) then
+    pcall(vim.api.nvim_buf_delete, M.float_buf, { force = true })
+  end
   M.float_win = nil
+  M.float_buf = nil
 end
 
 ---Actually move editing focus: close the peek float and open the file for

@@ -13,9 +13,10 @@ CONTENTS                                                     *gitwalk-contents*
 1. Introduction                                          *gitwalk-introduction*
 
 gitwalk.nvim renders `git diff` as a tree whose leaves are individual hunks,
-not files. Expanding a file reveals its hunks; moving between them and
-pressing <CR> jumps your cursor to the exact changed line, with a live
-preview kept in sync as you move.
+not files. Expanding a file reveals its hunks; moving between them shows a
+floating preview of just that hunk's diff (rendered through `delta` when
+it's installed, for syntax highlighting — plain `filetype=diff` otherwise).
+Pressing <CR> jumps your cursor to the exact changed line in a real window.
 
 ==============================================================================
 2. Setup                                                        *gitwalk-setup*

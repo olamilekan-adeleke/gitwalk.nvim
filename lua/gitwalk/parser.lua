@@ -48,7 +48,13 @@ function M.parse(text)
       }
       header_lines = { line }
     elseif current then
-      table.insert(header_lines, line)
+      -- Only pre-hunk lines (index/---/+++) belong in the file's diff
+      -- header; the "@@" line itself is captured separately in each hunk's
+      -- own `lines`, so it must not also land in header_lines or the patch
+      -- text built from diff_header .. hunk.lines would duplicate it.
+      if not current_hunk and not line:match("^@@ ") then
+        table.insert(header_lines, line)
+      end
       if line == "--- /dev/null" then
         current.status = "A"
       elseif line == "+++ /dev/null" then

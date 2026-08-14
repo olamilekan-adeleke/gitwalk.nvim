@@ -1,4 +1,5 @@
 local parser = require("gitwalk.parser")
+local patch = require("gitwalk.patch")
 
 local M = {}
 
@@ -13,34 +14,45 @@ local function run(cmd, cwd, cb)
   end)
 end
 
----Build a synthetic single-hunk FileChange for an untracked file.
+---Build a synthetic single-hunk FileChange for an untracked file, with a
+---diff header/hunk header shaped like real `git diff` output so it can be
+---fed to `patch.lua` (staging, delta preview) the same way as tracked files.
 ---@param path string
 ---@param cwd string
 ---@return FileChange
 local function untracked_file_change(path, cwd)
   local abs = cwd .. "/" .. path
-  local lines = {}
+  local body = {}
   local f = io.open(abs, "r")
   if f then
     for l in f:lines() do
-      table.insert(lines, "+" .. l)
+      table.insert(body, "+" .. l)
     end
     f:close()
   end
+  local n = #body
+  local lines = { string.format("@@ -0,0 +1,%d @@", n) }
+  vim.list_extend(lines, body)
   return {
     path = path,
     status = "?",
-    additions = #lines,
+    additions = n,
     deletions = 0,
+    diff_header = string.format(
+      "diff --git a/%s b/%s\nnew file mode 100644\nindex 0000000..0000000\n--- /dev/null\n+++ b/%s\n",
+      path,
+      path,
+      path
+    ),
     hunks = {
       {
         index = 1,
         old_start = 0,
         old_count = 0,
         new_start = 1,
-        new_count = #lines,
+        new_count = n,
         context = nil,
-        additions = #lines,
+        additions = n,
         deletions = 0,
         lines = lines,
       },
@@ -93,10 +105,9 @@ function M.stage_hunk(file, hunk, cwd, cb)
     cb(false, "missing diff header for " .. file.path)
     return
   end
-  local patch = file.diff_header .. table.concat(hunk.lines, "\n") .. "\n"
   local job = vim.system(
     { "git", "apply", "--cached", "--unidiff-zero", "-" },
-    { cwd = cwd or vim.uv.cwd(), stdin = patch, text = true },
+    { cwd = cwd or vim.uv.cwd(), stdin = patch.hunk(file, hunk), text = true },
     function(res)
       vim.schedule(function()
         cb(res.code == 0, res.code ~= 0 and res.stderr or nil)
