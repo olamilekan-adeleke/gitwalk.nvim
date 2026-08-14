@@ -2,22 +2,19 @@ local M = {}
 
 ---@class GitwalkConfig
 M.defaults = {
-  width = 40,
-  position = "left", -- "left" | "right"
-  icons = true,
-  sign_column = true,
+  width = 0.9, -- fraction of columns for the whole modal
+  height = 0.85, -- fraction of lines for the whole modal
+  list_ratio = 0.4, -- fraction of the modal width given to the list pane
   diff_context = 0,
   keymaps = {
-    next = "j",
-    prev = "k",
+    next = "<C-n>",
+    prev = "<C-p>",
     jump = "<CR>",
-    expand = "l",
-    collapse = "h",
-    toggle = "<Tab>",
-    refresh = "r",
-    stage_hunk = "s",
-    stage_file = "S",
-    close = "q",
+    toggle = "<Tab>", -- expand/collapse the node under the selection (browse mode)
+    refresh = "<C-r>",
+    stage_hunk = "<C-s>",
+    stage_file = "<C-x>",
+    close = "<Esc>",
   },
 }
 

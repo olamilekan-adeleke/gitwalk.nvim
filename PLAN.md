@@ -105,20 +105,24 @@ merging shared prefixes (same algorithm as nvim-tree/oil.nvim use).
 
 ## 6. Module layout
 
+Superseded by the actual implementation (evolved from the original
+sidebar+split-preview design in this plan to a Telescope-style modal
+picker):
+
 ```
 gitwalk.nvim/
 ├── lua/gitwalk/
-│   ├── init.lua          -- setup(), public API, user commands
+│   ├── init.lua          -- setup(), public API, user commands, jump/stage actions
 │   ├── config.lua        -- default config + merge
-│   ├── git.lua           -- async git calls, raw diff text
+│   ├── git.lua           -- async git calls, raw diff text, staging
 │   ├── parser.lua        -- diff text -> FileChange[]/Hunk[]
 │   ├── tree.lua          -- FileChange[] -> TreeNode tree, expand/collapse state
+│   ├── patch.lua         -- FileChange/Hunk -> unified-diff patch text
+│   ├── diffview.lua      -- patch text -> window, via delta or plain filetype=diff
 │   ├── ui/
-│   │   ├── panel.lua     -- tree window/buffer lifecycle, render loop
-│   │   ├── preview.lua   -- preview window, cursor sync, highlight
-│   │   └── render.lua    -- TreeNode[] -> lines + extmarks
-│   ├── actions.lua       -- jump, stage_hunk, stage_file, refresh
-│   └── health.lua        -- :checkhealth gitwalk (git binary, nvim version)
+│   │   ├── picker.lua    -- the modal: prompt + filterable list + preview panes
+│   │   └── render.lua    -- TreeNode[] -> lines + extmarks (browse/tree mode)
+│   └── health.lua        -- :checkhealth gitwalk (git, delta, nvim version)
 ├── plugin/gitwalk.lua    -- user command registration (thin, guarded by loaded-guard)
 ├── doc/gitwalk.txt        -- :help gitwalk
 ├── tests/                -- plenary.nvim busted-style specs

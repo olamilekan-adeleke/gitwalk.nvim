@@ -1,4 +1,4 @@
-*gitwalk.txt*  Navigate git diffs as a tree of hunks
+*gitwalk.txt*  A fuzzy-finder-style picker over git diff hunks
 
 ==============================================================================
 CONTENTS                                                     *gitwalk-contents*
@@ -12,11 +12,14 @@ CONTENTS                                                     *gitwalk-contents*
 ==============================================================================
 1. Introduction                                          *gitwalk-introduction*
 
-gitwalk.nvim renders `git diff` as a tree whose leaves are individual hunks,
-not files. Expanding a file reveals its hunks; moving between them shows a
-floating preview of just that hunk's diff (rendered through `delta` when
-it's installed, for syntax highlighting — plain `filetype=diff` otherwise).
-Pressing <CR> jumps your cursor to the exact changed line in a real window.
+gitwalk.nvim is a centered, floating picker (list pane + full preview pane,
+like a fuzzy finder) whose results are individual hunks, not files. With an
+empty filter it shows the collapsible dir/file/hunk tree; typing fuzzy-filters
+straight to a file or hunk across the whole diff. The preview shows just the
+selected hunk's diff (not the whole file), rendered through `delta` when it's
+installed, for syntax highlighting — plain `filetype=diff` otherwise.
+Pressing <CR> closes the picker and jumps your cursor to the exact changed
+line in a real window.
 
 ==============================================================================
 2. Setup                                                        *gitwalk-setup*
@@ -29,51 +32,51 @@ Pressing <CR> jumps your cursor to the exact changed line in a real window.
 3. Commands                                                  *gitwalk-commands*
 
 :Gitwalk                                                            *:Gitwalk*
-    Open the panel (or refresh it if already open).
+    Open the picker (or refresh it if already open).
 
 :GitwalkToggle                                                *:GitwalkToggle*
-    Toggle the panel open/closed.
+    Toggle the picker open/closed.
 
 :GitwalkRefresh                                              *:GitwalkRefresh*
-    Re-run `git diff` and redraw the tree, preserving expand state.
+    Re-run `git diff` and redraw the list, without closing the picker.
 
 ==============================================================================
 4. Keymaps                                                    *gitwalk-keymaps*
 
-Buffer-local to the gitwalk panel:
+The picker opens in insert mode in the filter prompt — just type to
+fuzzy-filter. These are buffer-local to the prompt (both insert and normal
+mode):
 
-    j / k       next / previous node, updates the preview
-    <CR>        jump: move editing focus to the hunk's first changed line
-    l           expand node
-    h           collapse node
-    <Tab>       toggle expand/collapse
-    r           refresh
-    s           stage the hunk under the cursor
-    S           stage the whole file under the cursor
-    q           close the panel
+    (typing)    fuzzy-filter files/hunks across the whole diff
+    <C-n>       next item
+    <C-p>       previous item
+    <CR>        jump: close the picker, move editing focus to the hunk's line
+    <Tab>       expand/collapse the node under the selection (empty filter)
+    <C-r>       refresh (re-run git diff)
+    <C-s>       stage the hunk under the selection
+    <C-x>       stage the whole file under the selection
+    <Esc>       close the picker
 
-All are rebindable, see |gitwalk-config|.
+All are rebindable, see |gitwalk-config|. Leaving the prompt buffer (e.g.
+switching windows) also closes the picker.
 
 ==============================================================================
 5. Configuration                                                *gitwalk-config*
 >lua
     require("gitwalk").setup({
-      width = 40,
-      position = "left",   -- "left" | "right"
-      icons = true,
-      sign_column = true,
+      width = 0.9,       -- fraction of columns for the whole modal
+      height = 0.85,      -- fraction of lines for the whole modal
+      list_ratio = 0.4,   -- fraction of modal width given to the list pane
       diff_context = 0,
       keymaps = {
-        next = "j",
-        prev = "k",
+        next = "<C-n>",
+        prev = "<C-p>",
         jump = "<CR>",
-        expand = "l",
-        collapse = "h",
         toggle = "<Tab>",
-        refresh = "r",
-        stage_hunk = "s",
-        stage_file = "S",
-        close = "q",
+        refresh = "<C-r>",
+        stage_hunk = "<C-s>",
+        stage_file = "<C-x>",
+        close = "<Esc>",
       },
     })
 <

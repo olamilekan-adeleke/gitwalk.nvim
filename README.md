@@ -1,25 +1,31 @@
 # gitwalk.nvim
 
-Navigate `git diff` as a tree of **hunks**, not files — review moves
-change-by-change, with a live preview and jump-to-exact-line.
+A fuzzy-finder-style picker over `git diff`, where the results are **hunks**,
+not files — browse change-by-change, filter to find one fast, `<CR>` jumps
+straight to it.
 
 ```
-▼ lib
-  ▼ auth
-    ▼ login.dart [+17 -4] [3]
-      ├─ ① loading state       L18
-      ├─ ② authentication      L47
-      └─ ③ error handling      L103
+╭─ gitwalk ──────────╮╭─ preview ──────────────────────────╮
+│ > auth              ││ lib/auth/login.dart                │
+├──────────────────────┤├──────────────────────────────────┤
+│ ▼ lib                ││ 16: class Login {                 │
+│   ▼ auth              ││   bool loading = false;           │
+│     ▼ login.dart [3]  ││                                    │
+│       ① loading  L18  ││   Future<void> login() async {    │
+│       ② auth     L47  ││   }                                │
+│       ③ error    L103 ││                                    │
+╰──────────────────────╯╰──────────────────────────────────╯
 ```
 
-`j`/`k` moves node-to-node (hunks once a file is expanded); the floating
-preview shows just that hunk's diff, not the whole file. `<CR>` drops your
-cursor on the exact changed line in a real window.
+Leave the filter empty to browse the collapsible dir/file/hunk tree; start
+typing to fuzzy-filter straight to a file or hunk across the whole diff, like
+a fuzzy finder. The preview shows only the selected hunk's diff (not the
+whole file), rendered through `delta` when it's installed.
 
 ## Status
 
-MVP implemented: async git diff parsing, hunk tree, floating chunk-only
-preview (delta-rendered when available), jump, hunk/file staging,
+MVP implemented: async git diff parsing, hunk tree, fuzzy-filterable modal
+picker, delta-rendered chunk-only preview, jump, hunk/file staging,
 `:checkhealth`. See [`PLAN.md`](./PLAN.md) for the full architecture and
 roadmap.
 
@@ -30,7 +36,6 @@ roadmap.
 - [delta](https://github.com/dandavison/delta) (optional) — syntax-highlighted,
   colorized preview; without it the preview falls back to plain
   `filetype=diff` highlighting
-- [nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons) (optional)
 
 ## Install (lazy.nvim)
 
@@ -45,20 +50,22 @@ roadmap.
 ## Usage
 
 ```vim
-:Gitwalk         " open the hunk-tree panel
+:Gitwalk         " open the picker
 :GitwalkToggle   " toggle it
-:GitwalkRefresh  " re-run git diff, keep expand state
+:GitwalkRefresh  " re-run git diff without closing the picker
 ```
+
+You start in insert mode in the filter prompt — just type to fuzzy-filter.
 
 | Key | Action |
 |---|---|
-| `j` / `k` | move to next/prev node, updates preview |
-| `<CR>` | jump: move editing focus to the hunk's changed line |
-| `l` / `h` | expand / collapse |
-| `<Tab>` | toggle expand/collapse |
-| `r` | refresh |
-| `s` / `S` | stage hunk / stage file |
-| `q` | close |
+| *(type)* | fuzzy-filter files/hunks across the whole diff |
+| `<C-n>` / `<C-p>` | next / previous item |
+| `<CR>` | jump: close the picker and move editing focus to the hunk's line |
+| `<Tab>` | expand/collapse the node under the selection (empty filter only) |
+| `<C-r>` | refresh (re-run git diff) |
+| `<C-s>` / `<C-x>` | stage hunk / stage file under the selection |
+| `<Esc>` | close |
 
 All keymaps are configurable via `setup()` — see `:help gitwalk-config`.
 
@@ -66,10 +73,9 @@ All keymaps are configurable via `setup()` — see `:help gitwalk-config`.
 
 ```lua
 require("gitwalk").setup({
-  width = 40,
-  position = "left", -- "left" | "right"
-  icons = true,
-  sign_column = true,
+  width = 0.9,       -- fraction of columns for the whole modal
+  height = 0.85,      -- fraction of lines for the whole modal
+  list_ratio = 0.4,   -- fraction of modal width given to the list pane
   diff_context = 0,
   keymaps = { --[[ see :help gitwalk-config ]] },
 })

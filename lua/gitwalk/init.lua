@@ -1,7 +1,6 @@
 local config_mod = require("gitwalk.config")
 local git = require("gitwalk.git")
-local panel = require("gitwalk.ui.panel")
-local preview = require("gitwalk.ui.preview")
+local picker = require("gitwalk.ui.picker")
 
 local M = {}
 
@@ -22,28 +21,54 @@ local function refresh()
       vim.notify("gitwalk: " .. (err or "failed to read git diff"), vim.log.levels.ERROR)
       return
     end
-    if panel.is_open() then
-      panel.update(files)
+    if picker.is_open() then
+      picker.update(files)
     else
-      preview.remember_target_win()
-      panel.open(files, cwd(), M.config, M.on_action)
+      picker.open(files, cwd(), M.config, M.on_action)
     end
   end)
+end
+
+---bufload()/bufadd() don't reliably run filetype detection the way :edit
+---does, so force it once the buffer is loaded.
+---@param abs string
+---@return integer bufnr
+local function load_file_buf(abs)
+  local bufnr = vim.fn.bufadd(abs)
+  vim.fn.bufload(bufnr)
+  if vim.bo[bufnr].filetype == "" then
+    local ft = vim.filetype.match({ buf = bufnr })
+    if ft then
+      vim.bo[bufnr].filetype = ft
+    end
+  end
+  return bufnr
+end
+
+---Jump: close the picker (which restores focus to whatever window was
+---current before it opened, since it's built entirely from floating
+---windows) and load the file at the hunk's line in that window.
+---@param node TreeNode
+local function jump(node)
+  local file = node.file
+  if not file then
+    return
+  end
+  local bufnr = load_file_buf(cwd() .. "/" .. file.path)
+  picker.close()
+  vim.cmd("buffer " .. bufnr)
+  local line = node.type == "hunk" and math.max(node.hunk.new_start, 1) or 1
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  pcall(vim.api.nvim_win_set_cursor, 0, { math.min(line, line_count), 0 })
+  vim.cmd("normal! zz")
 end
 
 ---@param action string
 ---@param node TreeNode?
 function M.on_action(action, node)
-  if action == "preview" then
+  if action == "jump" then
     if node and node.file then
-      preview.show(cwd(), node, panel.get_winid(), M.config.position)
-    end
-  elseif action == "jump" then
-    if node and node.file then
-      preview.focus(cwd(), node)
-    elseif node and node.type == "dir" then
-      node.expanded = not node.expanded
-      panel.redraw()
+      jump(node)
     end
   elseif action == "refresh" then
     refresh()
@@ -58,7 +83,7 @@ function M.on_action(action, node)
       end)
     end
   elseif action == "stage_file" then
-    local file = node and (node.file or (node.type == "dir" and nil))
+    local file = node and node.file
     if file then
       git.stage_file(file.path, cwd(), function(ok, err)
         if ok then
@@ -68,9 +93,6 @@ function M.on_action(action, node)
         end
       end)
     end
-  elseif action == "close" then
-    preview.close()
-    panel.close()
   end
 end
 
@@ -79,9 +101,8 @@ function M.open()
 end
 
 function M.toggle()
-  if panel.is_open() then
-    preview.close()
-    panel.close()
+  if picker.is_open() then
+    picker.close()
   else
     M.open()
   end
