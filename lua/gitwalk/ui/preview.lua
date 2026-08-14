@@ -97,21 +97,21 @@ local function float_geometry(panel_winid, position)
   local total_cols = vim.o.columns
   local total_lines = vim.o.lines - vim.o.cmdheight - 2
   local panel_width = panel_winid and vim.api.nvim_win_get_width(panel_winid) or 0
-  local available_col = position == "right" and 0 or panel_width + 3
-  local available_width = total_cols - panel_width - 4
+  local available_col = position == "right" and 0 or panel_width + 2
+  local available_width = total_cols - panel_width - 3
 
-  -- A hunk is usually a handful of lines, not a full screen — cap the peek
-  -- to a comfortable reading size instead of filling all remaining space.
+  -- A hunk is usually a handful of lines, not a full screen — cap the width
+  -- to a comfortable reading size, but sit flush against the panel (same
+  -- top row, right up against its edge) rather than centered off in the
+  -- middle of the screen looking disconnected from it.
   local width = math.min(available_width, 90)
-  local height = math.min(math.floor(total_lines * 0.5), 20)
-  height = math.max(height, 8)
+  local height = math.min(total_lines, 30)
 
-  local col = available_col + math.floor((available_width - width) / 2)
-  local row = math.floor((total_lines - height) / 2)
+  local col = position == "right" and (available_col + available_width - width) or available_col
 
   return {
     relative = "editor",
-    row = math.max(row, 1),
+    row = 1,
     col = math.max(col, 0),
     width = width,
     height = height,
