@@ -29,6 +29,13 @@ local function ensure_buf()
   if M.state and vim.api.nvim_buf_is_valid(M.state.bufnr) then
     return M.state.bufnr
   end
+  -- close() clears M.state but leaves the bufhidden=hide scratch buffer
+  -- alive, so reuse it by name instead of creating a duplicate (which
+  -- nvim_buf_set_name rejects with E95).
+  local existing = vim.fn.bufnr("gitwalk://panel")
+  if existing ~= -1 and vim.api.nvim_buf_is_valid(existing) then
+    return existing
+  end
   local bufnr = vim.api.nvim_create_buf(false, true)
   vim.bo[bufnr].buftype = "nofile"
   vim.bo[bufnr].bufhidden = "hide"
@@ -198,6 +205,14 @@ function M.close()
     vim.api.nvim_win_close(M.state.winid, true)
   end
   M.state = nil
+end
+
+---@return integer? winid  valid only while the panel is open
+function M.get_winid()
+  if M.state and vim.api.nvim_win_is_valid(M.state.winid) then
+    return M.state.winid
+  end
+  return nil
 end
 
 function M.is_open()

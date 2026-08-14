@@ -36,12 +36,11 @@ end
 function M.on_action(action, node)
   if action == "preview" then
     if node and node.file then
-      preview.show(cwd(), node)
+      preview.show(cwd(), node, panel.get_winid(), M.config.position)
     end
   elseif action == "jump" then
     if node and node.file then
-      preview.show(cwd(), node)
-      preview.focus()
+      preview.focus(cwd(), node)
     elseif node and node.type == "dir" then
       node.expanded = not node.expanded
       panel.redraw()
@@ -70,6 +69,7 @@ function M.on_action(action, node)
       end)
     end
   elseif action == "close" then
+    preview.close()
     panel.close()
   end
 end
@@ -80,6 +80,7 @@ end
 
 function M.toggle()
   if panel.is_open() then
+    preview.close()
     panel.close()
   else
     M.open()
